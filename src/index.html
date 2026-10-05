@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>计算器 - 前后端分离</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        /* Calculator */
+        .calculator {
+            background: #1e1e2e;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 380px;
+            flex-shrink: 0;
+        }
+
+        .display {
+            background: #11111b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: right;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .expression {
+            color: #888899;
+            font-size: 18px;
+            min-height: 24px;
+            word-break: break-all;
+            margin-bottom: 8px;
+        }
+
+        .result {
+            color: #ffffff;
+            font-size: 36px;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .error {
+            color: #ff6b6b;
+            font-size: 16px;
+            margin-top: 8px;
+            min-height: 20px;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            background: #313244;
+            color: #cdd6f4;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            background: #45475a;
+            transform: scale(0.98);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-op {
+            background: #45475a;
+            color: #fab387;
+        }
+
+        .btn-op:hover {
+            background: #585b70;
+        }
+
+        .btn-equals {
+            background: #89b4fa;
+            color: #1e1e2e;
+            font-weight: 700;
+        }
+
+        .btn-equals:hover {
+            background: #74c7ec;
+        }
+
+        .btn-clear {
+            background: #f38ba8;
+            color: #1e1e2e;
+        }
+
+        .btn-clear:hover {
+            background: #eba0ac;
+        }
+
+        .btn-zero {
+            grid-column: span 2;
+        }
+
+        /* History Panel */
+        .history-panel {
+            background: #1e1e2e;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-height: 560px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #313244;
+        }
+
+        .history-title {
+            color: #cdd6f4;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .btn-clear-all {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #f38ba8;
+            color: #1e1e2e;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-clear-all:hover {
+            background: #eba0ac;
+        }
+
+        .history-list {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .history-item {
+            background: #313244;
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-content {
+            flex: 1;
+        }
+
+        .history-expr {
+            color: #89b4fa;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .history-result {
+            color: #a6e3a1;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .history-time {
+            color: #6c7086;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .btn-delete {
+            background: transparent;
+            border: none;
+            color: #f38ba8;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            margin-left: 10px;
+            border-radius: 6px;
+        }
+
+        .btn-delete:hover {
+            background: rgba(243, 139, 168, 0.1);
+        }
+
+        .empty-history {
+            color: #6c7086;
+            text-align: center;
+            padding: 40px 20px;
+            font-size: 14px;
+        }
+
+        /* Scrollbar */
+        .history-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .history-list::-webkit-scrollbar-track {
+            background: #1e1e2e;
+        }
+
+        .history-list::-webkit-scrollbar-thumb {
+            background: #45475a;
+            border-radius: 3px;
+        }
+
+        @media (max-width: 850px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .history-panel {
+                width: 380px;
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Calculator -->
+        <div class="calculator">
+            <div class="display">
+                <div class="expression" id="expressionDisplay">&nbsp;</div>
+                <div class="result" id="resultDisplay">0</div>
+                <div class="error" id="errorDisplay"></div>
+            </div>
+            <div class="buttons">
+                <button class="btn btn-clear" onclick="clearAll()">AC</button>
+                <button class="btn" onclick="appendValue('(')">(</button>
+                <button class="btn" onclick="appendValue(')')">)</button>
+                <button class="btn btn-op" onclick="appendValue('/')">÷</button>
+                
+                <button class="btn" onclick="appendValue('7')">7</button>
+                <button class="btn" onclick="appendValue('8')">8</button>
+                <button class="btn" onclick="appendValue('9')">9</button>
+                <button class="btn btn-op" onclick="appendValue('*')">×</button>
+                
+                <button class="btn" onclick="appendValue('4')">4</button>
+                <button class="btn" onclick="appendValue('5')">5</button>
+                <button class="btn" onclick="appendValue('6')">6</button>
+                <button class="btn btn-op" onclick="appendValue('-')">−</button>
+                
+                <button class="btn" onclick="appendValue('1')">1</button>
+                <button class="btn" onclick="appendValue('2')">2</button>
+                <button class="btn" onclick="appendValue('3')">3</button>
+                <button class="btn btn-op" onclick="appendValue('+')">+</button>
+                
+                <button class="btn btn-zero" onclick="appendValue('0')">0</button>
+                <button class="btn" onclick="appendValue('.')">.</button>
+                <button class="btn btn-equals" onclick="calculate()">=</button>
+            </div>
+        </div>
+
+        <!-- History Panel -->
+        <div class="history-panel">
+            <div class="history-header">
+                <div class="history-title">计算历史</div>
+                <button class="btn-clear-all" onclick="clearAllHistory()">清空全部</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="empty-history">暂无计算记录</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Backend API base URL
+        const API_BASE = 'http://localhost:5000/api';
+        
+        let currentExpression = '';
+
+        function appendValue(value) {
+            currentExpression += value;
+            document.getElementById('expressionDisplay').innerHTML = 
+                currentExpression.replace(/\*/g, '×').replace(/\//g, '÷').replace(/-/g, '−');
+            document.getElementById('errorDisplay').textContent = '';
+        }
+
+        function clearAll() {
+            currentExpression = '';
+            document.getElementById('expressionDisplay').innerHTML = '&nbsp;';
+            document.getElementById('resultDisplay').textContent = '0';
+            document.getElementById('errorDisplay').textContent = '';
+        }
+
+        async function calculate() {
+            if (!currentExpression) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/calculate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        expression: currentExpression
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('resultDisplay').textContent = data.result;
+                    document.getElementById('errorDisplay').textContent = '';
+                    currentExpression = String(data.result);
+                    loadHistory();
+                } else {
+                    document.getElementById('errorDisplay').textContent = data.message;
+                }
+            } catch (error) {
+                document.getElementById('errorDisplay').textContent = '无法连接到服务器，请确保后端已启动';
+            }
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch(`${API_BASE}/history`);
+                const data = await response.json();
+
+                if (data.success) {
+                    renderHistory(data.data);
+                }
+            } catch (error) {
+                console.error('Failed to load history:', error);
+            }
+        }
+
+        function renderHistory(records) {
+            const historyList = document.getElementById('historyList');
+            
+            if (records.length === 0) {
+                historyList.innerHTML = '<div class="empty-history">暂无计算记录</div>';
+                return;
+            }
+
+            historyList.innerHTML = records.map(record => `
+                <div class="history-item">
+                    <div class="history-content">
+                        <div class="history-expr">${record.expression.replace(/\*/g, '×').replace(/\//g, '÷')} =</div>
+                        <div class="history-result">${record.result}</div>
+                        <div class="history-time">${record.created_at}</div>
+                    </div>
+                    <button class="btn-delete" onclick="deleteHistory(${record.id})">×</button>
+                </div>
+            `).join('');
+        }
+
+        async function deleteHistory(id) {
+            try {
+                const response = await fetch(`${API_BASE}/history/${id}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                if (data.success) {
+                    loadHistory();
+                }
+            } catch (error) {
+                console.error('Failed to delete record:', error);
+            }
+        }
+
+        async function clearAllHistory() {
+            if (!confirm('确定要清空所有计算历史吗？')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/history`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                if (data.success) {
+                    loadHistory();
+                }
+            } catch (error) {
+                console.error('Failed to clear history:', error);
+            }
+        }
+
+        // Load history on page load
+        window.onload = function() {
+            loadHistory();
+        };
+    </script>
+</body>
+</html>
